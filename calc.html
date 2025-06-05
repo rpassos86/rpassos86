@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Calculadora Roxa, Verde e Laranja</title>
+<style>
+  :root {
+    --purple: #6a0dad;
+    --green: #28a745;
+    --orange: #ff7f50; /* coral/laranja */
+    --orange-dark: #e67345;
+    --dark-purple: #4b0082;
+    --light-purple: #b19cd9;
+    --white: #f9f9f9;
+    --gray: #ccc;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    background: linear-gradient(135deg, var(--purple), var(--green));
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    color: var(--white);
+  }
+
+  .calculator {
+    background: var(--dark-purple);
+    border-radius: 20px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7);
+    width: 320px;
+    max-width: 90vw;
+    padding: 20px;
+  }
+
+  .display {
+    background: var(--light-purple);
+    border-radius: 15px;
+    padding: 15px 20px;
+    font-size: 2.5rem;
+    color: var(--dark-purple);
+    text-align: right;
+    user-select: none;
+    margin-bottom: 25px;
+    /* height removido para auto ajuste */
+    overflow-x: auto;
+    word-wrap: break-word;
+    min-height: 60px;
+  }
+
+  .buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+  }
+
+  button {
+    background: var(--purple);
+    border: none;
+    border-radius: 12px;
+    padding: 18px 0;
+    font-size: 1.5rem;
+    color: var(--white);
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.25);
+    user-select: none;
+  }
+
+  button:hover {
+    background-color: var(--green);
+    transform: scale(1.05);
+  }
+
+  button:active {
+    transform: scale(0.97);
+  }
+
+  .button-operator {
+    background: var(--orange);
+    font-weight: bold;
+  }
+  .button-operator:hover {
+    background: var(--orange-dark);
+  }
+
+  .button-span2 {
+    grid-column: span 2;
+  }
+</style>
+</head>
+<body>
+  <div class="calculator" role="region" aria-label="Calculadora">
+    <div id="display" class="display" aria-live="polite" aria-atomic="true">0</div>
+    <div class="buttons">
+      <button type="button" id="clear" aria-label="Limpar">C</button>
+      <button type="button" id="backspace" aria-label="Apagar último">⌫</button>
+      <button type="button" class="button-operator" data-operator="/">÷</button>
+      <button type="button" class="button-operator" data-operator="*">×</button>
+
+      <button type="button" data-number="7">7</button>
+      <button type="button" data-number="8">8</button>
+      <button type="button" data-number="9">9</button>
+      <button type="button" class="button-operator" data-operator="-">−</button>
+
+      <button type="button" data-number="4">4</button>
+      <button type="button" data-number="5">5</button>
+      <button type="button" data-number="6">6</button>
+      <button type="button" class="button-operator" data-operator="+">+</button>
+
+      <button type="button" data-number="1">1</button>
+      <button type="button" data-number="2">2</button>
+      <button type="button" data-number="3">3</button>
+      <button type="button" id="equals" class="button-operator" aria-label="Calcular resultado" >=</button>
+
+      <button type="button" data-number="0" class="button-span2">0</button>
+      <button type="button" data-number=".">,</button>
+    </div>
+  </div>
+
+<script>
+  (function() {
+    const display = document.getElementById('display');
+    let currentInput = '0';
+    let resultCalculated = false;
+
+    function updateDisplay() {
+      display.textContent = currentInput;
+    }
+
+    function isOperator(char) {
+      return ['+', '-', '*', '/'].includes(char);
+    }
+
+    function appendNumber(num) {
+      if (resultCalculated) {
+        currentInput = num === '.' ? '0.' : num;
+        resultCalculated = false;
+        return;
+      }
+      if (currentInput === '0' && num !== '.') {
+        currentInput = num;
+      } else {
+        // Evita múltiplos pontos na parte numérica atual
+        if (num === '.' && currentInput.slice(-1) === '.') return;
+        const parts = currentInput.split(/[\+\-\*\/]/);
+        if (num === '.' && parts[parts.length - 1].includes('.')) return;
+        currentInput += num;
+      }
+    }
+
+    function appendOperator(op) {
+      if (resultCalculated) {
+        resultCalculated = false;
+      }
+      if (currentInput.length === 0) return;
+      if (isOperator(currentInput.slice(-1))) {
+        currentInput = currentInput.slice(0, -1) + op;
+      } else {
+        currentInput += op;
+      }
+    }
+
+    function clearAll() {
+      currentInput = '0';
+      resultCalculated = false;
+    }
+
+    function backspace() {
+      if (resultCalculated) {
+        clearAll();
+        return;
+      }
+      if (currentInput.length > 1) {
+        currentInput = currentInput.slice(0, -1);
+      } else {
+        currentInput = '0';
+      }
+    }
+
+    function calculate() {
+      try {
+        let expression = currentInput.replace(/,/g, '.');
+        let evalResult = eval(expression);
+        if (evalResult === Infinity || evalResult === -Infinity) {
+          currentInput = 'Erro: divisão por zero';
+        } else if (isNaN(evalResult)) {
+          currentInput = 'Erro';
+        } else {
+          currentInput = String(evalResult).replace('.', ',');
+        }
+        resultCalculated = true;
+      } catch {
+        currentInput = 'Erro';
+        resultCalculated = true;
+      }
+    }
+
+    document.querySelector('.buttons').addEventListener('click', (e) => {
+      if (!e.target.matches('button')) return;
+      const btn = e.target;
+
+      if (btn.id === 'clear') {
+        clearAll();
+        updateDisplay();
+        return;
+      }
+      if (btn.id === 'backspace') {
+        backspace();
+        updateDisplay();
+        return;
+      }
+      if (btn.id === 'equals') {
+        calculate();
+        updateDisplay();
+        return;
+      }
+      if (btn.hasAttribute('data-number')) {
+        appendNumber(btn.getAttribute('data-number'));
+        updateDisplay();
+        return;
+      }
+      if (btn.hasAttribute('data-operator')) {
+        appendOperator(btn.getAttribute('data-operator'));
+        updateDisplay();
+        return;
+      }
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if ((e.key >= '0' && e.key <= '9') || e.key === '.') {
+        appendNumber(e.key === '.' ? '.' : e.key);
+        updateDisplay();
+      } else if (['+', '-', '*', '/'].includes(e.key)) {
+        appendOperator(e.key);
+        updateDisplay();
+      } else if (e.key === 'Enter' || e.key === '=') {
+        calculate();
+        updateDisplay();
+      } else if (e.key === 'Backspace') {
+        backspace();
+        updateDisplay();
+      } else if (e.key.toLowerCase() === 'c') {
+        clearAll();
+        updateDisplay();
+      }
+    });
+
+    updateDisplay();
+  })();
+</script>
+</body>
+</html>
+
